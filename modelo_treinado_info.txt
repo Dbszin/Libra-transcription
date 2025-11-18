@@ -1,0 +1,15 @@
+INFORMAÇÕES DO MODELO TREINADO
+============================================================
+
+Dataset: dataset
+Número de classes: 4
+Classes: eu, i_love_you, nada, voce
+
+Accuracy no teste: 1.0000 (100.00%)
+Loss no teste: 0.0000
+
+Mapeamento de classes:
+ 0: eu
+ 1: i_love_you
+ 2: nada
+ 3: voce

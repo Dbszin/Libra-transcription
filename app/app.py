@@ -15,11 +15,18 @@ import h5py
 
 mp_hands = mp.solutions.hands
 
+RTC_CONFIGURATION = {
+    "iceServers": [
+        {"urls": ["stun:stun.l.google.com:19302"]},
+        {"urls": ["stun:stun1.l.google.com:19302"]},
+    ]
+}
+
 
 # Obtém o diretório do script atual
 script_dir = os.path.dirname(os.path.abspath(__file__))
 # Constrói o caminho para o modelo (está na raiz do projeto)
-path = os.path.join(script_dir, "..", "modelo_tl_final.h5")
+path = os.path.join(script_dir, "..", "modelo_treinado.h5")
 path = os.path.normpath(path)  # Normaliza o caminho para o sistema operacional
 
 # Verifica se o arquivo existe, caso contrário tenta o modelo original
@@ -58,7 +65,7 @@ except ImportError:
     print("⚠️  Usando labels do modelo original")
 
 # Threshold de confiança (pode ser ajustado)
-CONFIDENCE_THRESHOLD = 0.1  # 15% - reduzido para capturar mais predições
+CONFIDENCE_THRESHOLD = 0.25  # 
 
 # Variável global para modo debug
 DEBUG_MODE = False
@@ -105,6 +112,7 @@ class VideoTransformer(VideoTransformerBase):
             min_detection_confidence=0.5,
             min_tracking_confidence=0.5
         )
+        
     
     def coordinates(self, hand_landmarks, img):
         # Aumenta o offset para capturar mais área ao redor da mão
@@ -143,22 +151,39 @@ class VideoTransformer(VideoTransformerBase):
         
 
     def transform(self, frame):
+
         img = frame.to_ndarray(format="bgr24")
 
+
+
         img = cv2.flip(img, 1)
-        
+
+       
+
         rgb_frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
         results = self.hands.process(rgb_frame)
-        
+
+       
+
         if results.multi_hand_landmarks:
+
             fist_hand = results.multi_hand_landmarks[0]
+
             self.coordinates(fist_hand, img)
-            
+
+           
+
             #Check if there is a second hand
+
             if len(results.multi_hand_landmarks) > 1:
+
                 second_hand = results.multi_hand_landmarks[1]
+
                 self.coordinates(second_hand, img)
-            
+
+           
+
         return img
 
 st.sidebar.image("https://www.mjvinnovation.com/wp-content/uploads/2021/07/mjv_blogpost_redes_neurais_ilustracao_cerebro-01-1024x1020.png")
@@ -222,7 +247,11 @@ def exibir_imagem():
 
 
         
-webrtc_streamer(key="hand-recognition-1", video_processor_factory=VideoTransformer)
+webrtc_streamer(
+    key="hand-recognition-1", 
+    video_processor_factory=VideoTransformer,
+    rtc_configuration=RTC_CONFIGURATION
+)
 
 if st.button("Clique aqui para exibir as imagens"):
     exibir_imagem()

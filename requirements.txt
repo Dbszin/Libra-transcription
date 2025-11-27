@@ -1,11 +1,1 @@
-streamlit>=1.10
-streamlit-webrtc>=0.38.0
-opencv-python>=4.5.5
-numpy>=1.21.6
-tensorflow>=2.9.0
-mediapipe>=0.8.10
-h5py>=3.1.0
-scikit-learn>=1.0
-matplotlib>=3.4.3
-pillow>=8.4.0
-av>=8.0.3
+ÿþ

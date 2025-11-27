@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import streamlit as st
 import os
+from PIL import Image
 
 os.environ["KERAS_BACKEND"] = "tensorflow"
 # Configura variáveis de ambiente do TensorFlow antes de importar
@@ -214,36 +215,48 @@ confidence_threshold = st.sidebar.slider(
 CONFIDENCE_THRESHOLD = confidence_threshold
 DEBUG_MODE = st.sidebar.checkbox("Modo Debug", help="Mostra as top 3 predições no console")
 
-def exibir_imagem():
-    st.subheader("Imagem dos sinais")
-    num_colunas = 5
-    imagens = [
-        'assets/bank_1605967468_148.jpeg',
-        'assets/bus_1605967420_87.jpeg',
-        'assets/car_1605967469_166.jpeg',
-        'assets/formation_1605967420_969.jpeg',
-        'assets/hospital_1605967420_62.jpeg',
-        'assets/I_1605967469_110.jpeg',
-        'assets/man_1605967420_82.jpeg',
-        'assets/motorcycle_1605967415_6.jpeg',
-        'assets/my_1605967420_99.jpeg',
-        'assets/supermarket_1605967420_70.jpeg',
-        'assets/we_1605967420_78.jpeg',
-        'assets/woman_1605967469_87.jpeg',
-        'assets/you (plural)_1605967420_55.jpeg',
-        'assets/you_1605967420_63.jpeg',
-        'assets/your_1605967420_70.jpeg'
-    ]
-    legendas = [
-        'banco', 'onibus', 'carro', 'formação', 'hospital',
-        'eu', 'homem', 'motocicleta', 'Meu', 'supermercado',
-        'nos', 'mulher', 'voces', 'voce', 'sua'
-    ]
 
-    colunas = st.columns(num_colunas)
-    for i, (imagem_path, legenda) in enumerate(zip(imagens, legendas)):
-        with colunas[i % num_colunas]:
-            st.image(imagem_path, caption=legenda, width=150)
+
+def show_sign_examples():
+    """Mostra exemplos de sinais disponíveis no dataset"""
+    st.subheader("📚 Exemplos de Sinais")
+    
+    dataset_path = os.path.join(os.path.dirname(__file__), "..", "dataset")
+    
+    if not os.path.exists(dataset_path):
+        st.warning("Pasta de dataset não encontrada.")
+        return
+    
+    # Obtém as pastas/classes disponíveis
+    classes = [d for d in os.listdir(dataset_path) 
+               if os.path.isdir(os.path.join(dataset_path, d))]
+    
+    if not classes:
+        st.warning("Nenhuma classe encontrada no dataset.")
+        return
+    
+    # Cria abas para cada classe
+    tabs = st.tabs(classes)
+    
+    for tab, class_name in zip(tabs, classes):
+        with tab:
+            class_path = os.path.join(dataset_path, class_name)
+            images = [f for f in os.listdir(class_path) 
+                     if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+            
+            if images:
+                # Mostra até 6 exemplos em grid 3x2
+                cols = st.columns(3)
+                for idx, img_name in enumerate(images[:6]):
+                    with cols[idx % 3]:
+                        img_path = os.path.join(class_path, img_name)
+                        try:
+                            img = Image.open(img_path)
+                            st.image(img, caption=f"{class_name}", use_container_width=True)
+                        except Exception as e:
+                            st.error(f"Erro ao carregar: {img_name}")
+            else:
+                st.info(f"Nenhuma imagem encontrada para '{class_name}'")
 
 
         
@@ -254,7 +267,7 @@ webrtc_streamer(
 )
 
 if st.button("Clique aqui para exibir as imagens"):
-    exibir_imagem()
-    
+    show_sign_examples()
+
 
 

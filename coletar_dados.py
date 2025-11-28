@@ -15,31 +15,24 @@ Instruções:
 
 import cv2
 import os
-import numpy as np
 from datetime import datetime
 import mediapipe as mp
 
-# Configurações
 DATASET_DIR = "dataset"
-IMAGE_SIZE = (224, 224) # Mesmo tamanho usado no treinamento (MobileNetV2)
+IMAGE_SIZE = (224, 224)
 
 def criar_estrutura_dataset():
-    """Cria a estrutura de pastas do dataset se não existir."""
     if not os.path.exists(DATASET_DIR):
         os.makedirs(DATASET_DIR)
         print(f"✅ Pasta '{DATASET_DIR}' criada!")
 
 def coletar_imagens_sinal(nome_sinal):
-    """Coleta imagens para um sinal específico."""
-    # Cria pasta para o sinal
     pasta_sinal = os.path.join(DATASET_DIR, nome_sinal)
     if not os.path.exists(pasta_sinal):
         os.makedirs(pasta_sinal)
     
-    # Inicializa a câmera
     cap = cv2.VideoCapture(0)
     
-    # Inicializa o MediaPipe Hands (com 2 mãos para sinais que usam ambas)
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
         static_image_mode=False,
@@ -53,19 +46,18 @@ def coletar_imagens_sinal(nome_sinal):
         hands.close()
         return
     
-    # --- Configurações de exibição ---
     if nome_sinal == 'nada':
         instrucao_extra = "APONTE PARA O FUNDO VAZIO (ou MÃO RELAXADA)"
-        cor_instrucao = (255, 165, 0) # Laranja para aviso
+        cor_instrucao = (255, 165, 0)
     else:
         instrucao_extra = "POSICIONE A MÃO(S) NO QUADRO VERDE"
         cor_instrucao = (0, 255, 0)
         
     print(f"\n📸 Coletando imagens para o sinal: '{nome_sinal}'")
     print(f"📌 Instrução: {instrucao_extra}")
-    print("  - Pressione ESPAÇO para capturar uma imagem")
-    print("  - Pressione 'q' para finalizar")
-    print("  - Pressione 'r' para reiniciar a contagem\n")
+    print("  - Pressione ESPAÇO para capturar uma imagem")
+    print("  - Pressione 'q' para finalizar")
+    print("  - Pressione 'r' para reiniciar a contagem\n")
     
     contador = 1
     
@@ -75,15 +67,12 @@ def coletar_imagens_sinal(nome_sinal):
             print("❌ Erro ao capturar frame da câmera")
             break
         
-        # 1. Espelha a imagem
         frame = cv2.flip(frame, 1)
         h, w, c = frame.shape
         
-        # 2. Processamento com MediaPipe (apenas para detecção)
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = hands.process(frame_rgb)
         
-        # Variáveis de Bounding Box e status
         x_min, y_min = w, h
         x_max, y_max = 0, 0
         mao_detectada = False
@@ -92,10 +81,7 @@ def coletar_imagens_sinal(nome_sinal):
         if results.multi_hand_landmarks:
             mao_detectada = True
             
-            # 3. Calcular a Bounding Box (Caixa Delimitadora)
             for hand_landmarks in results.multi_hand_landmarks:
-                
-                # Percorre todos os pontos-chave (landmarks) da(s) mão(s)
                 for lm in hand_landmarks.landmark:
                     x, y = int(lm.x * w), int(lm.y * h)
                     x_min = min(x_min, x)
@@ -103,31 +89,25 @@ def coletar_imagens_sinal(nome_sinal):
                     x_max = max(x_max, x)
                     y_max = max(y_max, y)
                 
-                # Desenha os landmarks
                 mp.solutions.drawing_utils.draw_landmarks(
                     frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
             
-            # 4. Aplicar Margem (Padding) e Cortar
             padding = 30 
             x1 = max(0, x_min - padding)
             y1 = max(0, y_min - padding)
             x2 = min(w, x_max + padding)
             y2 = min(h, y_max + padding)
             
-            # Desenha o retângulo de corte (ROI)
             cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            
-            # Frame cortado que será salvo (ROI)
             frame_cortado = frame[y1:y2, x1:x2]
-            
-        # 5. Adiciona informações na tela
+        
         texto_instrucao = f"Sinal: {nome_sinal} | Capturadas: {contador-1}"
         cv2.putText(frame, texto_instrucao, (10, 30), 
-                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         
         if nome_sinal == 'nada':
-             status_texto = "ESPACO para Capturar Fundo/Nada"
-             cor_status = cor_instrucao # Laranja
+            status_texto = "ESPACO para Capturar Fundo/Nada"
+            cor_status = cor_instrucao
         elif mao_detectada:
             status_texto = "MAO(S) DETECTADA(S)! (ESPACO para Capturar)"
             cor_status = (0, 255, 0)
@@ -136,34 +116,28 @@ def coletar_imagens_sinal(nome_sinal):
             cor_status = (0, 0, 255)
             
         cv2.putText(frame, status_texto, (10, 60), 
-                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, cor_status, 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, cor_status, 2)
         
         cv2.imshow('Coleta de Dados - Pressione ESPACO para capturar', frame)
         
         key = cv2.waitKey(1) & 0xFF
         
-        if key == ord(' '):  # Espaço para capturar
-            
-            # 🚨 LÓGICA DE SALVAMENTO ATUALIZADA 🚨
+        if key == ord(' '):
             img_para_salvar = None
             
             if nome_sinal == 'nada':
-                # CLASSE NADA: Salva o frame inteiro (fundo) redimensionado.
                 img_para_salvar = cv2.resize(frame, IMAGE_SIZE)
                 cv2.putText(frame, "NADA CAPTURADO!", (w // 2 - 100, h // 2), 
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 165, 0), 3)
             
             elif mao_detectada and frame_cortado is not None and frame_cortado.size > 0:
-                # SINAIS DE MÃO: Salva o frame CORTADO redimensionado.
                 img_para_salvar = cv2.resize(frame_cortado, IMAGE_SIZE)
                 cv2.putText(frame, "CAPTURADA!", (w // 2 - 80, h // 2), 
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 3)
-            
             else:
                 print("⚠️ Erro: Mão não detectada. Não é possível salvar.")
-                continue # Não salva se não for 'nada' e não detectar mão
+                continue
             
-            # --- SALVAMENTO ---
             if img_para_salvar is not None:
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
                 nome_arquivo = f"{nome_sinal}_{timestamp}_{contador:04d}.jpg"
@@ -174,16 +148,15 @@ def coletar_imagens_sinal(nome_sinal):
                 contador += 1
                 
                 cv2.imshow('Coleta de Dados - Pressione ESPACO para capturar', frame)
-                cv2.waitKey(300) # Mostra feedback por 300ms
+                cv2.waitKey(300)
             
-        elif key == ord('r'): # Reiniciar contagem
+        elif key == ord('r'):
             contador = 1
             print("🔄 Contagem reiniciada")
             
-        elif key == ord('q'): # Sair
+        elif key == ord('q'):
             break
     
-    # 6. Libera recursos
     hands.close()
     cap.release()
     cv2.destroyAllWindows()
@@ -192,7 +165,6 @@ def coletar_imagens_sinal(nome_sinal):
     print(f"\n✅ Coleta finalizada! Total de {total_capturadas} imagens salvas em '{pasta_sinal}'")
 
 def main():
-    """Função principal."""
     print("=" * 60)
     print("🤟 COLETOR DE DADOS PARA RECONHECIMENTO DE LIBRAS")
     print("=" * 60)
@@ -212,7 +184,6 @@ def main():
             print("❌ Nome do sinal não pode estar vazio!")
             continue
         
-        # Remove espaços e caracteres especiais do nome da pasta
         nome_sinal_limpo = nome_sinal.replace(" ", "_").lower()
         
         coletar_imagens_sinal(nome_sinal_limpo)

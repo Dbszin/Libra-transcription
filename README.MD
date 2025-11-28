@@ -284,33 +284,11 @@ Contribuições são bem-vindas! Para contribuir:
 4. Push para a branch (`git push origin feature/NovaFeature`)
 5. Abra um Pull Request
 
-## Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
-
-## Autores
-
-- **Seu Nome** - *Trabalho Inicial* - [seu-usuario](https://github.com/seu-usuario)
-
-## Agradecimentos
-
-- MediaPipe pela excelente biblioteca de detecção de mãos
-- TensorFlow/Keras pela framework de Deep Learning
-- Streamlit pela plataforma de desenvolvimento de apps
-- Comunidade surda brasileira pela importância da Libras
-
-## Contato
-
-- Email: seu-email@exemplo.com
-- LinkedIn: [seu-perfil](https://linkedin.com/in/seu-perfil)
-- GitHub: [@seu-usuario](https://github.com/seu-usuario)
 
 ---
 
 <div align="center">
 
 **Se este projeto foi útil, considere dar uma estrela!**
-
-Feito com Python
 
 </div>
